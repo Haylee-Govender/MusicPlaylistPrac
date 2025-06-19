@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build_and_test: # Renamed the job to reflect its purpose
+    runs-on: ubuntu-latest
+    strategy:
+      # Use a matrix to test against multiple Node.js versions
+      # Remove this if you only need to test against one version
+      matrix:
+        node-version: [18.x, 20.x] # Example Node.js versions
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }} # Using the matrix variable
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm' # Cache npm dependencies for faster builds
+
+      - name: Install dependencies
+        run: npm ci # 'npm ci' is preferred for CI/CD to ensure clean installs
+
+      - name: Run ESLint (Linting)
+        # Assuming you have ESLint configured and a script in package.json like "lint": "eslint ."
+        run: npm run lint # Or npm run lint:fix if you want to automatically fix issues (careful with PRs)
+        continue-on-error: true # Allow the workflow to continue even if linting fails, but mark it as a warning
+
+      - name: Run Unit and Integration Tests
+        # Assuming your package.json has a "test" script, e.g., "test": "jest"
+        run: npm test
+
+      - name: Collect Code Coverage
+        # If your 'npm test' command generates coverage reports (e.g., using Jest with --coverage)
+        # This step uploads the coverage report to Codecov, Coveralls, etc.
+        # You'll need to set up a service and potentially a token.
+        # Example using Codecov:
+        # uses: codecov/codecov-action@v4
+        # with:
+        #   token: ${{ secrets.CODECOV_TOKEN }} # Set this in your repository secrets
+        #   file: ./coverage/lcov.info # Adjust path based on your test runner's output
+        #   flags: unittests # Optional flags
+        #   name: codecov-umbrella # Optional name
+        # You would uncomment and configure this if you use a coverage service.
+        run: echo "Code coverage collection step placeholder." # Placeholder if no specific service is used yet
+
+      # Optional: Build step if your project needs to be built before deployment
+      - name: Build project (if applicable)
+        # Assuming you have a build script, e.g., "build": "webpack" or "build": "tsc"
+        # run: npm run build
+        run: echo "Build step placeholder if needed."
+
